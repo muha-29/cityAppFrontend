@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Navigation - Civic Complaint Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <style>
+        body {
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+            position: relative;
+            z-index: 1000;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .navbar-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-menu a:hover {
+            color: var(--primary);
+        }
+
+        .map-container {
+            display: flex;
+            height: calc(100vh - 70px);
+            position: relative;
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 400px;
+            background: white;
+            overflow-y: auto;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            margin-bottom: 5px;
+            font-size: 1.5em;
+        }
+
+        .sidebar-header p {
+            opacity: 0.9;
+            font-size: 0.9em;
+            margin: 0;
+        }
+
+        .navigation-section {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            flex: 0 0 auto;
+        }
+
+        .navigation-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1em;
+        }
+
+        .search-group {
+            margin-bottom: 15px;
+        }
+
+        .search-group label {
+            display: block;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .search-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .search-suggestions.show {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background: #f8f9fa;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .quick-btn {
+            padding: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .route-info {
+            padding: 20px;
+            background: #f0f4ff;
+            border-left: 4px solid var(--primary);
+            flex: 0 0 auto;
+            display: none;
+        }
+
+        .route-info.show {
+            display: block;
+        }
+
+        .route-info h4 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .route-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .route-stat-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .route-stat-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .pothole-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .pothole-warning.show {
+            display: block;
+        }
+
+        .pothole-warning h5 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .pothole-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .pothole-list li {
+            color: #666;
+            padding: 6px 0;
+            font-size: 0.9em;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .speed-recommendation {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .speed-recommendation.show {
+            display: block;
+        }
+
+        .speed-recommendation h5 {
+            color: #0c5460;
+            margin-bottom: 10px;
+        }
+
+        .speed-indicator {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .speed-gauge {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+            min-width: 60px;
+        }
+
+        .speed-text {
+            color: #666;
+        }
+
+        .tracking-section {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            flex: 0 0 auto;
+            display: none;
+        }
+
+        .tracking-section.show {
+            display: block;
+        }
+
+        .tracking-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .tracking-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tracking-btn.start {
+            background: var(--success);
+            color: white;
+        }
+
+        .tracking-btn.start:hover {
+            background: #00A040;
+        }
+
+        .tracking-btn.stop {
+            background: var(--danger);
+            color: white;
+        }
+
+        .tracking-btn.stop:hover {
+            background: #dd3333;
+        }
+
+        .tracking-info {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .tracking-info.show {
+            display: block;
+        }
+
+        .tracking-status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .tracking-status-label {
+            color: #666;
+        }
+
+        .tracking-status-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .share-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .share-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: white;
+        }
+
+        .share-whatsapp {
+            background: #25d366;
+        }
+
+        .share-whatsapp:hover {
+            background: #1fab54;
+        }
+
+        .share-telegram {
+            background: #0088cc;
+        }
+
+        .share-telegram:hover {
+            background: #0077b5;
+        }
+
+        .share-copy {
+            background: #667eea;
+        }
+
+        .share-copy:hover {
+            background: #764ba2;
+        }
+
+        .complaints-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .complaint-card {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .complaint-card:hover {
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .complaint-card h4 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .complaint-card p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .legend {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            background: #f8f9fa;
+            flex: 0 0 auto;
+        }
+
+        .legend h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .legend-marker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .legend-marker.pending {
+            background: #fff3cd;
+        }
+
+        .legend-marker.progress {
+            background: #d1ecf1;
+        }
+
+        .legend-marker.resolved {
+            background: #d4edda;
+        }
+
+        .legend-marker.user {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .legend-marker.destination {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .legend-marker.route {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #00d4aa;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 968px) {
+            .map-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 50vh;
+            }
+
+            #map {
+                height: 50vh;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+            }
+
+            #map {
+                height: 60vh;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="index.html" class="navbar-brand">🌍 Civic Tracker</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="create-complaint.html">Report Issue</a>
+                <a href="map.html">Smart Navigation</a>
+                <button class="btn btn-small btn-primary" onclick="handleAuthButton()">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="map-container">
+        <!-- Map -->
+        <div id="map"></div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Header -->
+            <div class="sidebar-header">
+                <h2>🗺️ Smart Navigation</h2>
+                <p>Navigate with pothole awareness</p>
+            </div>
+
+            <!-- Navigation Section -->
+            <div class="navigation-section">
+                <h3>📍 Route Planning</h3>
+
+                <!-- Current Location -->
+                <div class="search-group">
+                    <label>Starting Point</label>
+                    <input type="text" id="startInput" placeholder="Current Location" readonly>
+                </div>
+
+                <!-- Destination -->
+                <div class="search-group">
+                    <div class="search-container">
+                        <label>Destination</label>
+                        <input type="text" id="destinationInput" placeholder="Enter destination...">
+                        <div class="search-suggestions" id="suggestions"></div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="getDirections()">
+                        <span>🎯</span>
+                        <span>Get Route</span>
+                    </button>
+                    <button class="quick-btn" onclick="clearRoute()">
+                        <span>✕</span>
+                        <span>Clear</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Route Info -->
+            <div class="route-info" id="routeInfo">
+                <h4>📊 Route Details</h4>
+
+                <div class="route-stat">
+                    <span class="route-stat-label">Distance:</span>
+                    <span class="route-stat-value" id="routeDistance">-</span>
+                </div>
+
+                <div class="route-stat">
+                    <span class="route-stat-label">ETA:</span>
+                    <span class="route-stat-value" id="routeETA">-</span>
+                </div>
+
+                <div class="route-stat">
+                    <span class="route-stat-label">Potholes:</span>
+                    <span class="route-stat-value" id="potholesCount">0</span>
+                </div>
+
+                <!-- Pothole Warning -->
+                <div class="pothole-warning" id="potholeWarning">
+                    <h5>⚠️ Potholes Detected</h5>
+                    <ul class="pothole-list" id="potholeList">
+                    </ul>
+                </div>
+
+                <!-- Speed Recommendation -->
+                <div class="speed-recommendation" id="speedRec">
+                    <h5>🚗 Recommended Speed</h5>
+                    <div class="speed-indicator">
+                        <div class="speed-gauge" id="speedGauge">40</div>
+                        <div class="speed-text">
+                            <p style="margin: 0; font-size: 0.9em;">Safe Speed Limit</p>
+                            <p style="margin: 0; color: #999; font-size: 0.85em;" id="speedInfo">Based on route
+                                conditions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Tracking Section -->
+            <div class="tracking-section" id="trackingSection">
+                <h3>📍 Live Tracking</h3>
+
+                <div class="tracking-controls">
+                    <button class="tracking-btn start" onclick="startTracking()" id="startTrackingBtn">
+                        <span>▶</span>
+                        <span>Start</span>
+                    </button>
+                    <button class="tracking-btn stop" onclick="stopTracking()" id="stopTrackingBtn"
+                        style="display: none;">
+                        <span>⏹</span>
+                        <span>Stop</span>
+                    </button>
+                </div>
+
+                <div class="tracking-info" id="trackingInfo">
+                    <div class="tracking-status">
+                        <span class="tracking-status-label">Status:</span>
+                        <span class="tracking-status-value live-indicator" id="trackingStatus">
+                            <div class="live-dot"></div>
+                            <span>Active</span>
+                        </span>
+                    </div>
+                    <div class="tracking-status">
+                        <span class="tracking-status-label">Current Speed:</span>
+                        <span class="tracking-status-value" id="currentSpeed">0 km/h</span>
+                    </div>
+                    <div class="tracking-status">
+                        <span class="tracking-status-label">Distance Covered:</span>
+                        <span class="tracking-status-value" id="distanceCovered">0 km</span>
+                    </div>
+                    <div class="tracking-status">
+                        <span class="tracking-status-label">Time Elapsed:</span>
+                        <span class="tracking-status-value" id="timeElapsed">0:00</span>
+                    </div>
+                </div>
+
+                <h5 style="color: #333; margin-bottom: 10px;">📤 Share Your Journey</h5>
+                <div class="share-buttons">
+                    <button class="share-btn share-whatsapp" onclick="shareOnWhatsApp()">
+                        <span>📱</span>
+                        <span>WhatsApp</span>
+                    </button>
+                    <button class="share-btn share-telegram" onclick="shareOnTelegram()">
+                        <span>✈️</span>
+                        <span>Telegram</span>
+                    </button>
+                    <button class="share-btn share-copy" onclick="copyShareLink()">
+                        <span>🔗</span>
+                        <span>Copy Link</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Complaints List -->
+            <div class="complaints-list" id="complaintsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading complaints...</p>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <h3>Map Legend</h3>
+                <div class="legend-item">
+                    <div class="legend-marker user">📍</div>
+                    <span>Your Location</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker destination">📍</div>
+                    <span>Destination</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker route"></div>
+                    <span>Route</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker pending">⏳</div>
+                    <span>Pending Issue</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/performance.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/geocoding.js"></script>
+    <script src="js/monitoring.js"></script>
+    <!-- <script src="js/performance.js"></script> -->
+    <script>
+        // Global variables
+        let map;
+        let userMarker = null;
+        let destinationMarker = null;
+        let routingControl = null;
+        let complaintMarkers = [];
+        let allComplaints = [];
+        let currentRoute = null;
+        let userLocation = null;
+        let isTracking = false;
+        let trackingInterval = null;
+        let trackingStartTime = null;
+        let trackingPath = [];
+        let trackingPolyline = null;
+        let journeyStartLocation = null;
+        let realtimeChannel = null;
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([28.6139, 77.2090], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Get user location
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    (position) => {
+                        userLocation = [position.coords.latitude, position.coords.longitude];
+                        updateUserMarker();
+
+                        if (!map._initialCenter) {
+                            map.setView(userLocation, 13);
+                            map._initialCenter = true;
+                        }
+                    },
+                    (error) => {
+                        console.log('Geolocation error:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        maximumAge: 5000,
+                        timeout: 20000
+                    }
+                );
+            }
+        }
+
+        // Update user marker on map
+        function updateUserMarker() {
+            if (!userLocation) return;
+
+            if (userMarker) {
+                map.removeLayer(userMarker);
+            }
+
+            userMarker = L.marker(userLocation, {
+                icon: L.divIcon({
+                    className: 'user-marker',
+                    html: `
+                        <div style="
+                            background: linear-gradient(135deg, #667eea, #764ba2);
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-size: 1.5em;
+                            border: 3px solid white;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        ">📍</div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                })
+            }).addTo(map);
+
+            // Update start input
+            document.getElementById('startInput').value = `${userLocation[0].toFixed(4)}, ${userLocation[1].toFixed(4)}`;
+
+            // Add to tracking path if tracking
+            if (isTracking) {
+                trackingPath.push(userLocation);
+                updateTrackingPolyline();
+                updateTrackingInfo();
+            }
+        }
+
+        // Handle destination input search with debouncing
+        let searchTimeout;
+        document.getElementById('destinationInput').addEventListener('input', function (e) {
+            clearTimeout(searchTimeout);
+
+            const query = e.target.value;
+            if (query.length < 3) {
+                document.getElementById('suggestions').classList.remove('show');
+                return;
+            }
+
+            // Debounce the search - wait 300ms after user stops typing
+            searchTimeout = setTimeout(async () => {
+                try {
+                    console.log('Searching for:', query);
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`,
+                        {
+                            signal: AbortSignal.timeout(5000) // 5 second timeout
+                        }
+                    );
+
+                    if (!response.ok) throw new Error('Search failed');
+
+                    const results = await response.json();
+
+                    const suggestions = document.getElementById('suggestions');
+                    suggestions.innerHTML = results.slice(0, 5).map((r, i) => `
+                <div class="suggestion-item" onclick="selectDestination(${r.lat}, ${r.lon}, '${r.display_name.replace(/'/g, "\\'")}')">
+                    <strong>${r.display_name.split(',')[0]}</strong>
+                    <p style="margin: 5px 0 0 0; color: #999; font-size: 0.85em;">${r.display_name}</p>
+                </div>
+            `).join('');
+                    suggestions.classList.add('show');
+                } catch (error) {
+                    console.error('Search error:', error);
+                }
+            }, 300); // Wait 300ms after user stops typing
+        });
+        // Select destination
+        function selectDestination(lat, lng, name) {
+            document.getElementById('destinationInput').value = name;
+            document.getElementById('suggestions').classList.remove('show');
+
+            // Update destination marker
+            if (destinationMarker) {
+                map.removeLayer(destinationMarker);
+            }
+
+            destinationMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'destination-marker',
+                    html: `
+                        <div style="
+                            background: #ff6b6b;
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-size: 1.5em;
+                            border: 3px solid white;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        ">🎯</div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                })
+            }).addTo(map);
+
+            map.setView([lat, lng], 13);
+        }
+
+
+        function displayComplaintsAlongRoute(route) {
+            const complaintsList = document.getElementById('complaintsList');
+            const routeCoordinates = route.coordinates;
+
+            // Filter complaints that are within 100 meters of the route
+            const complaintsOnRoute = allComplaints.filter(complaint => {
+                if (!complaint.latitude || !complaint.longitude) return false;
+
+                // Calculate minimum distance from complaint to route
+                const distance = getMinDistanceToRoute(
+                    [complaint.latitude, complaint.longitude],
+                    routeCoordinates
+                );
+
+                // Return complaints within 100 meters (0.1 km)
+                return distance <= 0.1;
+            });
+
+            // Sort by distance from start
+            complaintsOnRoute.sort((a, b) => {
+                const distA = getMinDistanceToRoute(
+                    [a.latitude, a.longitude],
+                    routeCoordinates
+                );
+                const distB = getMinDistanceToRoute(
+                    [b.latitude, b.longitude],
+                    routeCoordinates
+                );
+                return distA - distB;
+            });
+
+            // Display complaints
+            if (complaintsOnRoute.length === 0) {
+                complaintsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">✅</div>
+                        <h3>No Issues Found</h3>
+                        <p>This route is clear of reported issues!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            complaintsList.innerHTML = `
+                <div style="padding: 15px; background: #f0f4ff; border-left: 4px solid var(--primary); margin-bottom: 15px;">
+                    <h4 style="color: var(--primary); margin: 0;">⚠️ ${complaintsOnRoute.length} Issue(s) on Route</h4>
+                    <p style="color: #666; margin: 5px 0 0 0; font-size: 0.9em;">Below are civic issues detected along your route</p>
+                </div>
+            ` + complaintsOnRoute.map((complaint, index) => {
+                const distance = getMinDistanceToRoute(
+                    [complaint.latitude, complaint.longitude],
+                    routeCoordinates
+                );
+
+                const categoryIcons = {
+                    'Pothole': '🕳️',
+                    'Garbage': '🗑️',
+                    'Streetlight': '💡',
+                    'Water Supply': '💧',
+                    'Drainage': '🚰',
+                    'Road Damage': '🚗',
+                    'Public Property': '🏢',
+                    'Other': '📌'
+                };
+
+                const icon = categoryIcons[complaint.category] || '📍';
+
+                const statusColor = complaint.status === 'Pending' ? '#fff3cd' :
+                    complaint.status === 'In Progress' ? '#d1ecf1' : '#d4edda';
+                const statusIcon = complaint.status === 'Pending' ? '⏳' :
+                    complaint.status === 'In Progress' ? '🔄' : '✅';
+
+                return `
+                    <div class="complaint-card" style="margin-bottom: 12px; cursor: pointer; border-left: 4px solid ${statusColor};" 
+                         onclick="focusOnComplaintRoute('${complaint.id}')">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 5px 0; color: #333;">
+                                    <span>${index + 1}.</span> ${icon} ${complaint.title}
+                                </h4>
+                                <p style="margin: 0; color: #999; font-size: 0.85em;">
+                                    <strong>${complaint.category}</strong> • ${statusIcon} ${complaint.status}
+                                </p>
+                            </div>
+                            <div style="text-align: right; padding-left: 15px;">
+                                <div style="font-weight: 600; color: var(--primary); font-size: 0.9em;">
+                                    📏 ${(distance * 1000).toFixed(0)}m
+                                </div>
+                                <div style="font-size: 0.8em; color: #999;">away</div>
+                            </div>
+                        </div>
+
+                        <p style="margin: 8px 0; color: #666; font-size: 0.9em; line-height: 1.5;">
+                            ${Utils.truncate(complaint.description, 100)}
+                        </p>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0;">
+                            <span style="font-size: 0.8em; color: #999;">
+                                📅 ${Utils.formatDate(complaint.created_at)}
+                            </span>
+                            <span style="padding: 4px 12px; background: ${statusColor}; border-radius: 15px; font-size: 0.8em; font-weight: 600;">
+                                ${complaint.status}
+                            </span>
+                        </div>
+
+                        ${complaint.photo_url ? `
+                            <div style="margin-top: 10px;">
+                                <img src="${complaint.photo_url}" alt="Complaint" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px;">
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+
+        // Track getDirections performance
+        async function getDirections() {
+            await PerformanceMonitor.trackAsync('getDirections', async () => {
+                if (!userLocation) {
+                    alert('Please enable location access');
+                    return;
+                }
+
+                if (!destinationMarker) {
+                    alert('Please select a destination');
+                    return;
+                }
+
+                const dest = destinationMarker.getLatLng();
+
+                // Remove previous route
+                if (routingControl) {
+                    map.removeControl(routingControl);
+                }
+
+                // Create routing control
+                routingControl = L.Routing.control({
+                    waypoints: [
+                        L.latLng(userLocation[0], userLocation[1]),
+                        L.latLng(dest.lat, dest.lng)
+                    ],
+                    routeWhileDragging: false,
+                    showAlternatives: false,
+                    lineOptions: {
+                        styles: [
+                            { color: '#667eea', opacity: 0.8, weight: 5 }
+                        ]
+                    }
+                }).addTo(map);
+
+                // Handle route response
+                routingControl.on('routesfound', function (e) {
+                    const route = e.routes[0];
+                    currentRoute = route;
+
+                    // Calculate distance and time
+                    const distance = (route.summary.totalDistance / 1000).toFixed(2);
+                    const duration = Math.ceil(route.summary.totalTime / 60);
+
+                    document.getElementById('routeDistance').textContent = `${distance} km`;
+                    document.getElementById('routeETA').textContent = `${duration} mins`;
+
+                    // Calculate and display potholes
+                    calculatePotsholesInRoute(route);
+
+                    // *** LOAD COMPLAINTS ALONG ROUTE ***
+                    displayComplaintsAlongRoute(route);
+
+                    // Show route info
+                    document.getElementById('routeInfo').classList.add('show');
+
+                    // Show tracking section
+                    document.getElementById('trackingSection').classList.add('show');
+                });
+            });
+        }
+
+        // Calculate potholes and all issues in route
+        function calculatePotsholesInRoute(route) {
+            const routeLatLngs = route.coordinates;
+            let potholesInRoute = 0;
+            let otherIssuesInRoute = 0;
+            const potholesByDistance = [];
+            const otherIssuesByDistance = [];
+
+            allComplaints.forEach(complaint => {
+                if (!complaint.latitude || !complaint.longitude) return;
+
+                // Check if issue is near route (within 100 meters)
+                const distance = getMinDistanceToRoute(
+                    [complaint.latitude, complaint.longitude],
+                    routeLatLngs
+                );
+
+                if (distance <= 0.1) { // 100 meters
+                    if (complaint.category === 'Pothole') {
+                        potholesInRoute++;
+                        potholesByDistance.push({
+                            title: complaint.title,
+                            distance: distance,
+                            status: complaint.status
+                        });
+                    } else {
+                        otherIssuesInRoute++;
+                        otherIssuesByDistance.push({
+                            title: complaint.title,
+                            distance: distance,
+                            category: complaint.category,
+                            status: complaint.status
+                        });
+                    }
+                }
+            });
+
+            // Update pothole count
+            document.getElementById('potholesCount').textContent = (potholesInRoute + otherIssuesInRoute);
+
+            if (potholesInRoute > 0) {
+                const potholeList = document.getElementById('potholeList');
+                const allIssues = [
+                    ...potholesByDistance.slice(0, 3).map(p =>
+                        `<li>🕳️ ${p.title} (${(p.distance * 1000).toFixed(0)}m) - ${p.status}</li>`
+                    ),
+                    ...otherIssuesByDistance.slice(0, 2).map(p =>
+                        `<li>📍 ${p.title} (${(p.distance * 1000).toFixed(0)}m) - ${p.status}</li>`
+                    )
+                ];
+                potholeList.innerHTML = allIssues.join('');
+                document.getElementById('potholeWarning').classList.add('show');
+
+                // Recommend lower speed based on severity
+                const totalIssues = potholesInRoute + otherIssuesInRoute;
+                if (totalIssues > 3) {
+                    document.getElementById('speedGauge').textContent = '25';
+                    document.getElementById('speedInfo').textContent = '⚠️ Very careful - Multiple issues detected';
+                } else if (potholesInRoute > 0) {
+                    document.getElementById('speedGauge').textContent = '30';
+                    document.getElementById('speedInfo').textContent = '⚠️ Reduced for safety - Potholes detected';
+                } else {
+                    document.getElementById('speedGauge').textContent = '40';
+                    document.getElementById('speedInfo').textContent = '⚠️ Caution - Issues detected';
+                }
+                document.getElementById('speedRec').classList.add('show');
+            } else {
+                document.getElementById('potholeWarning').classList.remove('show');
+                document.getElementById('speedGauge').textContent = '50';
+                document.getElementById('speedInfo').textContent = '✅ Safe route - No issues detected';
+                document.getElementById('speedRec').classList.add('show');
+            }
+        }
+
+        // Get minimum distance from point to route (in km)
+        function getMinDistanceToRoute(point, routeCoords) {
+            let minDistance = Infinity;
+
+            for (let i = 0; i < routeCoords.length - 1; i++) {
+                const distance = getDistanceToLineSegment(
+                    point,
+                    [routeCoords[i].lat, routeCoords[i].lng],
+                    [routeCoords[i + 1].lat, routeCoords[i + 1].lng]
+                );
+                minDistance = Math.min(minDistance, distance);
+            }
+
+            return minDistance;
+        }
+
+        // Get distance from point to line segment (in km) - Perpendicular distance
+        function getDistanceToLineSegment(point, lineStart, lineEnd) {
+            const px = point[0], py = point[1];
+            const x1 = lineStart[0], y1 = lineStart[1];
+            const x2 = lineEnd[0], y2 = lineEnd[1];
+
+            const A = px - x1;
+            const B = py - y1;
+            const C = x2 - x1;
+            const D = y2 - y1;
+
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = lenSq !== 0 ? dot / lenSq : 0;
+
+            let xx, yy;
+
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
+            } else if (param > 1) {
+                xx = x2;
+                yy = y2;
+            } else {
+                xx = x1 + param * C;
+                yy = y1 + param * D;
+            }
+
+            const dx = px - xx;
+            const dy = py - yy;
+
+            // Convert to km using simple approximation
+            // More accurate: use Haversine formula if needed
+            const R = 6371; // Earth radius in km
+            const dLat = (dy) * Math.PI / 180;
+            const dLng = (dx) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(point[0] * Math.PI / 180) * Math.cos(yy * Math.PI / 180) *
+                Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c;
+        }
+        // Clear route
+        function clearRoute() {
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+            if (destinationMarker) {
+                map.removeLayer(destinationMarker);
+                destinationMarker = null;
+            }
+            currentRoute = null;
+            document.getElementById('destinationInput').value = '';
+            document.getElementById('routeInfo').classList.remove('show');
+            document.getElementById('trackingSection').classList.remove('show');
+
+            // Reset complaints list to show all
+            const complaintsList = document.getElementById('complaintsList');
+            if (allComplaints.length === 0) {
+                complaintsList.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading complaints...</p>
+                    </div>
+                `;
+            } else {
+                displayComplaints(); // Show all complaints again
+            }
+
+            stopTracking();
+        }
+
+        // Start live tracking
+        async function startTracking() {
+            if (!currentRoute) {
+                alert('Please select a route first');
+                return;
+            }
+
+            isTracking = true;
+            trackingStartTime = Date.now();
+            trackingPath = [userLocation];
+            journeyStartLocation = userLocation;
+
+            document.getElementById('startTrackingBtn').style.display = 'none';
+            document.getElementById('stopTrackingBtn').style.display = 'flex';
+            document.getElementById('trackingInfo').classList.add('show');
+
+            // Create polyline for tracking
+            trackingPolyline = L.polyline([userLocation], {
+                color: 'blue',
+                opacity: 0.7,
+                weight: 4,
+                dashArray: '5, 5'
+            }).addTo(map);
+
+            // Update location every 3 seconds
+            const updateInterval = 5000; // 5 seconds instead of 3
+
+            trackingInterval = setInterval(() => {
+                updateUserMarker();
+                updateTrackingInfo();
+            }, updateInterval);
+
+
+        }
+
+        // Stop live tracking
+        function stopTracking() {
+            isTracking = false;
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+            }
+
+            document.getElementById('startTrackingBtn').style.display = 'flex';
+            document.getElementById('stopTrackingBtn').style.display = 'none';
+            document.getElementById('trackingInfo').classList.remove('show');
+
+            if (trackingPolyline) {
+                map.removeLayer(trackingPolyline);
+                trackingPolyline = null;
+            }
+        }
+
+        // Update tracking polyline
+        function updateTrackingPolyline() {
+            if (trackingPolyline) {
+                map.removeLayer(trackingPolyline);
+            }
+
+            if (trackingPath.length > 1) {
+                trackingPolyline = L.polyline(trackingPath, {
+                    color: '#667eea',
+                    opacity: 0.7,
+                    weight: 4,
+                    dashArray: '5, 5'
+                }).addTo(map);
+            }
+        }
+
+        // Update tracking info
+        function updateTrackingInfo() {
+            if (!trackingStartTime || !userLocation) return;
+
+            // Time elapsed
+            const timeElapsed = Math.floor((Date.now() - trackingStartTime) / 1000);
+            const minutes = Math.floor(timeElapsed / 60);
+            const seconds = timeElapsed % 60;
+            document.getElementById('timeElapsed').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Distance covered
+            let totalDistance = 0;
+            for (let i = 1; i < trackingPath.length; i++) {
+                totalDistance += calculateDistance(
+                    trackingPath[i - 1][0],
+                    trackingPath[i - 1][1],
+                    trackingPath[i][0],
+                    trackingPath[i][1]
+                );
+            }
+            document.getElementById('distanceCovered').textContent = totalDistance.toFixed(2) + ' km';
+
+            // Current speed (km/h)
+            if (trackingPath.length > 1) {
+                const lastPoint = trackingPath[trackingPath.length - 1];
+                const prevPoint = trackingPath[trackingPath.length - 2];
+                const pointDistance = calculateDistance(
+                    prevPoint[0], prevPoint[1],
+                    lastPoint[0], lastPoint[1]
+                );
+                const speedKmh = (pointDistance / (3 / 3600)).toFixed(1); // 3 seconds interval
+                document.getElementById('currentSpeed').textContent = speedKmh + ' km/h';
+            }
+        }
+
+        // Calculate distance (Haversine)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // Share on WhatsApp
+        function shareOnWhatsApp() {
+            if (!journeyStartLocation || !userLocation) {
+                alert('Complete your journey first');
+                return;
+            }
+
+            const message = encodeURIComponent(
+                `🗺️ *Smart Navigation - Live Location Share*\n\n` +
+                `📍 Starting Point: ${journeyStartLocation[0].toFixed(4)}, ${journeyStartLocation[1].toFixed(4)}\n` +
+                `📍 Current Location: ${userLocation[0].toFixed(4)}, ${userLocation[1].toFixed(4)}\n` +
+                `⏱️ Time: ${document.getElementById('timeElapsed').textContent}\n` +
+                `📏 Distance: ${document.getElementById('distanceCovered').textContent}\n` +
+                `🚗 Speed: ${document.getElementById('currentSpeed').textContent}\n\n` +
+                `🗺️ Map: https://maps.google.com/?q=${userLocation[0]},${userLocation[1]}\n` +
+                `\nTracking via Civic Complaint Tracker - Safe Journey! 🚗✨`
+            );
+
+            window.open(`https://wa.me/?text=${message}`, '_blank');
+        }
+
+        // Share on Telegram
+        function shareOnTelegram() {
+            if (!journeyStartLocation || !userLocation) {
+                alert('Complete your journey first');
+                return;
+            }
+
+            const message = encodeURIComponent(
+                `🗺️ Smart Navigation - Live Location Share\n\n` +
+                `📍 Starting Point: ${journeyStartLocation[0].toFixed(4)}, ${journeyStartLocation[1].toFixed(4)}\n` +
+                `📍 Current Location: ${userLocation[0].toFixed(4)}, ${userLocation[1].toFixed(4)}\n` +
+                `⏱️ Time: ${document.getElementById('timeElapsed').textContent}\n` +
+                `📏 Distance: ${document.getElementById('distanceCovered').textContent}\n` +
+                `🚗 Speed: ${document.getElementById('currentSpeed').textContent}\n\n` +
+                `Map: https://maps.google.com/?q=${userLocation[0]},${userLocation[1]}\n` +
+                `Tracking via Civic Complaint Tracker`
+            );
+
+            window.open(`https://t.me/share/url?url=https://maps.google.com/?q=${userLocation[0]},${userLocation[1]}&text=${message}`, '_blank');
+        }
+
+        // Copy share link
+        function copyShareLink() {
+            if (!userLocation) {
+                alert('Location not available');
+                return;
+            }
+
+            const shareLink = `https://maps.google.com/?q=${userLocation[0]},${userLocation[1]}`;
+            navigator.clipboard.writeText(shareLink).then(() => {
+                alert('Location link copied to clipboard!');
+            });
+        }
+
+        // Load complaints
+        async function loadComplaints() {
+            try {
+                const response = await ComplaintService.getAllComplaints();
+                if (response.success) {
+                    allComplaints = response.complaints || [];
+                    displayComplaints();
+                    addComplaintMarkers();
+                }
+            } catch (error) {
+                console.error('Error loading complaints:', error);
+            }
+        }
+
+        // Display complaints in sidebar
+        function displayComplaints() {
+            const complaintsList = document.getElementById('complaintsList');
+
+            if (allComplaints.length === 0) {
+                complaintsList.innerHTML = `
+                    <div class="loading">
+                        <p>No complaints in this area</p>
+                    </div>
+                `;
+                return;
+            }
+
+            complaintsList.innerHTML = allComplaints.map(complaint => `
+                <div class="complaint-card" onclick="focusOnComplaint('${complaint.id}')">
+                    <h4>${complaint.title}</h4>
+                    <p><strong>${complaint.category}</strong></p>
+                    <p style="color: #999; font-size: 0.85em;">${Utils.truncate(complaint.description, 80)}</p>
+                    <span class="badge ${complaint.status === 'Pending' ? 'badge-pending' : complaint.status === 'In Progress' ? 'badge-progress' : 'badge-resolved'}">
+                        ${complaint.status}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Add complaint markers to map
+        function addComplaintMarkers() {
+            complaintMarkers.forEach(marker => map.removeLayer(marker));
+            complaintMarkers = [];
+
+            allComplaints.forEach(complaint => {
+                if (!complaint.latitude || !complaint.longitude) return;
+
+                const icon = complaint.status === 'Pending' ? '⏳' :
+                    complaint.status === 'In Progress' ? '🔄' : '✅';
+
+                const marker = L.marker([complaint.latitude, complaint.longitude], {
+                    icon: L.divIcon({
+                        className: 'complaint-marker',
+                        html: `<div style="font-size: 1.5em;">${icon}</div>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    })
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div style="max-width: 250px;">
+                        <h4 style="margin: 0 0 10px 0;">${complaint.title}</h4>
+                        <p style="margin: 5px 0;"><strong>Category:</strong> ${complaint.category}</p>
+                        <p style="margin: 5px 0;"><strong>Status:</strong> ${complaint.status}</p>
+                        <p style="margin: 5px 0; color: #666; font-size: 0.9em;">${complaint.description}</p>
+                        ${complaint.photo_url ? `<img src="${complaint.photo_url}" style="width: 100%; margin-top: 10px; border-radius: 8px;">` : ''}
+                    </div>
+                `);
+
+                complaintMarkers.push(marker);
+            });
+        }
+
+        // Focus on complaint
+        function focusOnComplaint(complaintId) {
+            const complaint = allComplaints.find(c => c.id === complaintId);
+            if (complaint && complaint.latitude && complaint.longitude) {
+                map.setView([complaint.latitude, complaint.longitude], 15);
+
+                complaintMarkers.forEach(marker => {
+                    if (marker.getLatLng().lat === complaint.latitude &&
+                        marker.getLatLng().lng === complaint.longitude) {
+                        marker.openPopup();
+                    }
+                });
+            }
+        }
+
+        // Handle authentication button
+        async function handleAuthButton() {
+            const isAuth = await AuthService.isAuthenticated();
+            if (isAuth) {
+                const dashboardUrl = await AuthService.getDashboardUrl();
+                window.location.href = dashboardUrl;
+            } else {
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Update auth button
+        async function updateAuthButton() {
+            const isAuth = await AuthService.isAuthenticated();
+            const authBtn = document.querySelector('.navbar-menu .btn');
+
+            if (isAuth) {
+                const role = await AuthService.getCurrentUserRole();
+                if (role === 'admin') {
+                    authBtn.textContent = '👑 Admin';
+                } else {
+                    authBtn.textContent = 'Dashboard';
+                }
+            }
+        }
+
+        // Subscribe to real-time updates
+        function subscribeToUpdates() {
+            realtimeChannel = ComplaintService.subscribeToComplaints((payload) => {
+                console.log('Real-time update:', payload);
+                loadComplaints();
+            });
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (realtimeChannel) {
+                supabase.removeChannel(realtimeChannel);
+            }
+            stopTracking();
+        });
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                console.log('App hidden - pausing tracking updates');
+                // Could pause tracking here for better performance
+            } else {
+                console.log('App visible - resuming tracking updates');
+            }
+        });
+
+    </script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            loadComplaints();
+            subscribeToUpdates();
+            updateAuthButton();
+
+            // Performance optimizations
+            PerformanceOptimizer.logPerformance();
+            PerformanceOptimizer.lazyLoadImages();
+
+            // Debounce expensive operations
+            const debouncedResize = PerformanceOptimizer.debounce(() => {
+                if (map) {
+                    map.invalidateSize();
+                }
+            }, 500);
+
+            PerformanceOptimizer.onWindowResize(debouncedResize);
+            // Display only complaints along the route
+
+            // Focus on complaint and center map
+            function focusOnComplaintRoute(complaintId) {
+                const complaint = allComplaints.find(c => c.id === complaintId);
+                if (complaint && complaint.latitude && complaint.longitude) {
+                    map.setView([complaint.latitude, complaint.longitude], 16);
+
+                    // Find and highlight the marker
+                    complaintMarkers.forEach(marker => {
+                        const markerLat = marker.getLatLng().lat;
+                        const markerLng = marker.getLatLng().lng;
+
+                        if (Math.abs(markerLat - complaint.latitude) < 0.0001 &&
+                            Math.abs(markerLng - complaint.longitude) < 0.0001) {
+                            marker.openPopup();
+
+                            // Highlight animation
+                            marker.setOpacity(1);
+                            setTimeout(() => marker.setOpacity(0.7), 1000);
+                        }
+                    });
+
+                    // Scroll complaint into view
+                    const element = document.querySelector(`[data-complaint-id="${complaintId}"]`);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

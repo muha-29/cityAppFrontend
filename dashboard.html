@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Civic Complaint Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .navbar-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-menu a:hover {
+            color: var(--primary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .dashboard-header {
+            margin-bottom: 30px;
+        }
+
+        .dashboard-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-header p {
+            color: #666;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-icon {
+            font-size: 2em;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .complaints-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 1.8em;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .filter-tab:hover {
+            border-color: var(--primary);
+        }
+
+        .complaints-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .complaint-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .complaint-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .complaint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .complaint-card h3 {
+            color: #333;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .complaint-card .category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .complaint-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .complaint-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .complaint-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .x-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            border-radius: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-menu {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .complaints-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="index.html" class="navbar-brand">🌍 Civic Tracker</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="create-complaint.html">Report Issue</a>
+                <a href="map.html">Map View</a>
+                <a href="journey-history.html">📍 Journey History</a>
+                <a href="profile.html">Profile</a>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <span id="userName">User</span>
+                        <span id="userRole" style="font-size: 0.85em; color: #999; margin-left: 5px;"></span>
+                    </div>
+                    <button class="btn btn-small btn-danger" onclick="AuthService.logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="dashboard-header fade-in">
+            <h1>Welcome back, <span id="welcomeName">User</span>! 👋</h1>
+            <p>Here's what's happening with your civic complaints</p>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid fade-in">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <h3>Total Complaints</h3>
+                        <div class="number" id="totalComplaints">0</div>
+                    </div>
+                    <div class="stat-icon">📋</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <h3>Pending</h3>
+                        <div class="number" id="pendingComplaints">0</div>
+                    </div>
+                    <div class="stat-icon">⏳</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <h3>In Progress</h3>
+                        <div class="number" id="progressComplaints">0</div>
+                    </div>
+                    <div class="stat-icon">🔄</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div>
+                        <h3>Resolved</h3>
+                        <div class="number" id="resolvedComplaints">0</div>
+                    </div>
+                    <div class="stat-icon">✅</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaints Section -->
+        <div class="complaints-section fade-in">
+            <div class="section-header">
+                <h2>My Complaints</h2>
+                <a href="create-complaint.html" class="btn btn-primary">+ New Complaint</a>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">All</button>
+                <button class="filter-tab" data-filter="Pending">Pending</button>
+                <button class="filter-tab" data-filter="In Progress">In Progress</button>
+                <button class="filter-tab" data-filter="Resolved">Resolved</button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingContainer" class="loading-container">
+                <div class="spinner"></div>
+                <p>Loading your complaints...</p>
+            </div>
+
+            <!-- Complaints Grid -->
+            <div id="complaintsGrid" class="complaints-grid" style="display: none;"></div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">📭</div>
+                <h3>No complaints found</h3>
+                <p>Start by reporting your first civic issue</p>
+                <a href="create-complaint.html" class="btn btn-primary" style="margin-top: 20px;">Report an Issue</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        let allComplaints = [];
+        let currentFilter = 'all';
+        let realtimeChannel = null;
+
+        // Initialize dashboard
+        async function initDashboard() {
+            // Protect route
+            await protectRoute(false, true); // Requires citizen
+
+            const user = await AuthService.getCurrentUser();
+            if (user) {
+                // Update user info
+                document.getElementById('userName').textContent = user.name;
+                document.getElementById('welcomeName').textContent = user.name;
+                document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+            }
+
+            // Load complaints
+            await loadComplaints();
+
+            // Subscribe to real-time updates
+            subscribeToUpdates();
+        }
+
+        // Load complaints with performance optimization
+        async function loadComplaints() {
+            try {
+                const response = await ComplaintService.getMyComplaints();
+
+                if (response.success) {
+                    allComplaints = response.complaints || [];
+
+                    // Batch DOM updates for better performance
+                    PerformanceOptimizer.batchDOMUpdates([
+                        () => updateStatistics(),
+                        () => displayComplaints()
+                    ]);
+                }
+            } catch (error) {
+                console.error('Error loading complaints:', error);
+                Utils.showAlert('Failed to load complaints. Please try again.', 'error');
+            } finally {
+                document.getElementById('loadingContainer').style.display = 'none';
+            }
+        }
+
+        // Subscribe to real-time updates
+        function subscribeToUpdates() {
+            realtimeChannel = ComplaintService.subscribeToComplaints((payload) => {
+                console.log('Real-time update:', payload);
+                loadComplaints(); // Reload complaints on any change
+            });
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const total = allComplaints.length;
+            const pending = allComplaints.filter(c => c.status === 'Pending').length;
+            const progress = allComplaints.filter(c => c.status === 'In Progress').length;
+            const resolved = allComplaints.filter(c => c.status === 'Resolved').length;
+
+            document.getElementById('totalComplaints').textContent = total;
+            document.getElementById('pendingComplaints').textContent = pending;
+            document.getElementById('progressComplaints').textContent = progress;
+            document.getElementById('resolvedComplaints').textContent = resolved;
+        }
+
+        // Display complaints
+        function displayComplaints() {
+            const complaintsGrid = document.getElementById('complaintsGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            // Filter complaints
+            let filteredComplaints = allComplaints;
+            if (currentFilter !== 'all') {
+                filteredComplaints = allComplaints.filter(c => c.status === currentFilter);
+            }
+
+            if (filteredComplaints.length === 0) {
+                complaintsGrid.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            complaintsGrid.style.display = 'grid';
+
+            complaintsGrid.innerHTML = filteredComplaints.map(complaint => `
+                <div class="complaint-card slide-in">
+                    <div class="complaint-header">
+                        <div>
+                            <h3>${complaint.title}</h3>
+                            <span class="category">${complaint.category || 'General'}</span>
+                        </div>
+                        ${Utils.getStatusBadge(complaint.status)}
+                    </div>
+                    <p>${Utils.truncate(complaint.description, 120)}</p>
+                    ${complaint.photo_url ? `
+                        <img src="${complaint.photo_url}" alt="Complaint photo" 
+                             style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;">
+                    ` : ''}
+                    <div class="complaint-meta">
+                        <span>📍 ${complaint.latitude && complaint.longitude ? `${complaint.latitude.toFixed(4)}, ${complaint.longitude.toFixed(4)}` : 'No location'}</span>
+                        <span>${Utils.formatDate(complaint.created_at)}</span>
+                    </div>
+                    <div class="complaint-actions">
+                        <button class="btn btn-small btn-primary" onclick="viewComplaint('${complaint.id}')">View Details</button>
+                        ${complaint.status === 'Pending' ? `
+                            <button class="btn btn-small btn-danger" onclick="deleteComplaint('${complaint.id}')">Delete</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter tabs functionality
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                currentFilter = this.dataset.filter;
+                displayComplaints();
+            });
+        });
+
+        // View complaint details
+        function viewComplaint(complaintId) {
+            const complaint = allComplaints.find(c => c.id === complaintId);
+            if (complaint) {
+                alert(`Complaint Details:\n\nTitle: ${complaint.title}\nStatus: ${complaint.status}\nCategory: ${complaint.category}\nDescription: ${complaint.description}\n\nCreated: ${Utils.formatDate(complaint.created_at)}`);
+            }
+        }
+
+        // Delete complaint
+        async function deleteComplaint(complaintId) {
+            if (!confirm('Are you sure you want to delete this complaint?')) {
+                return;
+            }
+
+            try {
+                await ComplaintService.deleteComplaint(complaintId);
+                Utils.showAlert('Complaint deleted successfully', 'success');
+
+                await loadComplaints();
+            } catch (error) {
+                console.error('Error deleting complaint:', error);
+                Utils.showAlert('Failed to delete complaint. Please try again.', 'error');
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (realtimeChannel) {
+                supabase.removeChannel(realtimeChannel);
+            }
+        });
+
+        // Initialize on page load
+        // Display user role
+        async function displayUserRole() {
+            const user = await AuthService.getCurrentUser();
+            if (user) {
+                document.getElementById('userRole').textContent = '(' + (user.role.charAt(0).toUpperCase() + user.role.slice(1)) + ')';
+            }
+        }
+
+        // Call this in initDashboard function
+        window.addEventListener('DOMContentLoaded', async () => {
+            await displayUserRole();
+            initDashboard();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Civic Complaint Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .login-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            max-width: 1200px;
+            width: 100%;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        .info-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-section h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .info-section .tagline {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .civic-points {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .civic-points li {
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .civic-points li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-size: 1.5em;
+            color: #ffd700;
+        }
+
+        .importance-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border-left: 4px solid #ffd700;
+        }
+
+        .importance-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .login-section {
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-section h2 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .login-section p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input.error {
+            border-color: var(--danger);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .forgot-password-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password-link:hover {
+            text-decoration: underline;
+            color: #764ba2;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .btn-login:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-login .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        .btn-login.loading .btn-text {
+            display: none;
+        }
+
+        .btn-login.loading .spinner {
+            display: block;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .signup-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .back-home {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .back-home a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+
+        .back-home a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Modal for Forgot Password */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h2 {
+            color: #333;
+            margin: 0;
+        }
+
+        .modal-close {
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-description {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 20px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 10px;
+            color: #155724;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-message h3 {
+            margin-bottom: 10px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #666;
+            margin: 0;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 968px) {
+            .login-container {
+                grid-template-columns: 1fr;
+            }
+
+            .login-section {
+                padding: 40px 30px;
+            }
+
+            .info-section {
+                padding: 40px 30px;
+            }
+
+            .info-section h1 {
+                font-size: 2em;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="back-home">
+        <a href="index.html">← Back to Home</a>
+    </div>
+
+    <div class="container">
+        <div class="login-container">
+            <div class="info-section">
+                <h1>🌍 Civic Sense</h1>
+                <p class="tagline">Building Better Communities Through Responsible Citizenship</p>
+
+                <p>Civic sense is the consideration and awareness we show towards our society, public spaces, and fellow
+                    citizens. It's the foundation of a harmonious and progressive community.</p>
+
+                <ul class="civic-points">
+                    <li><strong>Respect Public Property:</strong> Treat public spaces and resources as your own</li>
+                    <li><strong>Follow Rules & Regulations:</strong> Traffic laws, queue discipline, and social norms
+                    </li>
+                    <li><strong>Environmental Responsibility:</strong> Keep surroundings clean and protect nature</li>
+                    <li><strong>Be Considerate:</strong> Show empathy and kindness to others in public spaces</li>
+                    <li><strong>Active Participation:</strong> Contribute to community development and welfare</li>
+                </ul>
+
+                <div class="importance-box">
+                    <h3>Why It Matters</h3>
+                    <p>Strong civic sense creates safer neighborhoods, cleaner cities, and a more united society. When
+                        we practice civic responsibility, we set an example for future generations and create lasting
+                        positive change.</p>
+                </div>
+            </div>
+
+            <div class="login-section">
+                <h2>Welcome Back!</h2>
+                <p>Login to continue your journey of civic engagement</p>
+
+                <div id="alertContainer"></div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" placeholder="your@email.com" required>
+                        <span class="error-message" id="emailError">Please enter a valid email</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter your password" required>
+                        <span class="error-message" id="passwordError">Password is required</span>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox" id="remember">
+                            <span>Remember me</span>
+                        </label>
+                        <a class="forgot-password-link" onclick="openForgotPasswordModal()">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="loginBtn">
+                        <span class="btn-text">Login</span>
+                        <div class="spinner"></div>
+                    </button>
+
+                    <div class="signup-link">
+                        Don't have an account? <a href="register.html">Sign Up</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal" id="forgotPasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">🔐 Reset Password</h2>
+                <button class="modal-close" onclick="closeForgotPasswordModal()">&times;</button>
+            </div>
+
+            <div id="modalAlert"></div>
+
+            <!-- Step 1: Enter Email -->
+            <div id="step1" class="modal-step show">
+                <p class="modal-description">
+                    Enter your email address and we'll send you a link to reset your password.
+                </p>
+
+                <div class="info-box">
+                    <p>📧 You'll receive an email with a password reset link. The link will expire in 24 hours.</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="resetEmail">Email Address</label>
+                    <input type="email" id="resetEmail" placeholder="your@email.com" required>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="closeForgotPasswordModal()">Cancel</button>
+                    <button class="btn-send" id="sendBtn" onclick="sendPasswordResetEmail()">Send Reset Link</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Success Message -->
+            <div id="step2" class="modal-step" style="display: none;">
+                <div class="success-message show">
+                    <h3>✅ Email Sent!</h3>
+                    <p>We've sent a password reset link to your email address.</p>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>What to do next:</strong></p>
+                    <p style="margin-top: 10px;">1. Check your email inbox (including spam folder)</p>
+                    <p>2. Click the password reset link in the email</p>
+                    <p>3. Follow the instructions to create a new password</p>
+                    <p>4. Return to login with your new password</p>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-cancel" onclick="closeForgotPasswordModal()"
+                        style="flex: 1; margin-top: 20px;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        // Check if already logged in
+        (async () => {
+            if (await AuthService.isAuthenticated()) {
+                window.location.href = 'dashboard.html';
+            }
+        })();
+
+        const form = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const alertContainer = document.getElementById('alertContainer');
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+
+        function showAlert(message, type = 'error') {
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        function showModalAlert(message, type = 'error') {
+            const modalAlert = document.getElementById('modalAlert');
+            modalAlert.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                modalAlert.innerHTML = '';
+            }, 5000);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+
+            // Basic validation
+            if (!Utils.validateEmail(email)) {
+                showAlert('Please enter a valid email address', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            // Show loading state
+            loginBtn.disabled = true;
+            loginBtn.classList.add('loading');
+
+            try {
+                const response = await AuthService.login({ email, password, remember });
+
+                const userRole = response.profile?.role || 'citizen';
+
+                if (userRole === 'admin') {
+                    window.location.href = '/admin.html';
+                } else {
+                    window.location.href = '/dashboard.html';
+                }
+                
+
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+
+            } catch (error) {
+                showAlert(error.message, 'error');
+                loginBtn.disabled = false;
+                loginBtn.classList.remove('loading');
+            }
+        });
+
+        // Forgot Password Functions
+        function openForgotPasswordModal() {
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('resetEmail').value = '';
+            document.getElementById('modalAlert').innerHTML = '';
+            forgotPasswordModal.classList.add('show');
+        }
+
+        function closeForgotPasswordModal() {
+            forgotPasswordModal.classList.remove('show');
+        }
+
+        // Close modal when clicking outside
+        forgotPasswordModal.addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeForgotPasswordModal();
+            }
+        });
+
+        // Send Password Reset Email
+        async function sendPasswordResetEmail() {
+            const email = document.getElementById('resetEmail').value.trim();
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (!Utils.validateEmail(email)) {
+                showModalAlert('Please enter a valid email address', 'error');
+                return;
+            }
+
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            try {
+                // Use Supabase's built-in password reset
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password.html`
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Show success message
+                document.getElementById('step1').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+
+                // Auto-close modal after 5 seconds
+                setTimeout(() => {
+                    closeForgotPasswordModal();
+                }, 5000);
+
+            } catch (error) {
+                console.error('Error sending reset email:', error);
+                showModalAlert(error.message || 'Failed to send reset email. Please try again.', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Reset Link';
+            }
+        }
+
+        // Allow Enter key to send email in modal
+        document.getElementById('resetEmail').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendPasswordResetEmail();
+            }
+        });
+    </script>
+</body>
+
+</html>

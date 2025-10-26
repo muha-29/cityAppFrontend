@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Civic Complaint Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .register-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .register-card h2 {
+            color: #333;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .register-card .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input.error {
+            border-color: var(--danger);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-register:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-register:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-register .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        .btn-register.loading .btn-text {
+            display: none;
+        }
+
+        .btn-register.loading .spinner {
+            display: block;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .login-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .back-home {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .back-home a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95em;
+        }
+
+        .back-home a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="register-container">
+        <div style="width: 100%; max-width: 500px;">
+            <div class="back-home">
+                <a href="index.html">← Back to Home</a>
+            </div>
+
+            <div class="register-card">
+                <h2>Create Account</h2>
+                <p class="subtitle">Join us in building better communities</p>
+
+                <div id="alertContainer"></div>
+
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="name">Full Name *</label>
+                        <input type="text" id="name" placeholder="Younus Sk" required>
+                        <span class="error-message" id="nameError">Name must be at least 2 characters</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" placeholder="muhamamdyounusshaik@gmail.com" required>
+                        <span class="error-message" id="emailError">Please enter a valid email</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" id="password" placeholder="Minimum 6 characters" required>
+                        <span class="error-message" id="passwordError">Password must be at least 6 characters</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password *</label>
+                        <input type="password" id="confirmPassword" placeholder="Re-enter password" required>
+                        <span class="error-message" id="confirmPasswordError">Passwords don't match</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" placeholder="9182393442" max="10">
+                    </div>
+
+                    <!-- <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea id="address" rows="3" placeholder="Your address (optional)"></textarea>
+                    </div> -->
+
+                    <div class="form-group">
+                        <label for="role">Register As *</label>
+                        <select id="role" required>
+                            <option value="citizen">Citizen</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-register" id="registerBtn">
+                        <span class="btn-text">Create Account</span>
+                        <div class="spinner"></div>
+                    </button>
+
+                    <div class="login-link">
+                        Already have an account? <a href="login.html">Login here</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        const form = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        const alertContainer = document.getElementById('alertContainer');
+
+        function showAlert(message, type = 'error') {
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showFieldError(fieldId, errorId, message) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(errorId);
+            field.classList.add('error');
+            error.textContent = message;
+            error.classList.add('show');
+        }
+
+        function clearFieldError(fieldId, errorId) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(errorId);
+            field.classList.remove('error');
+            error.classList.remove('show');
+        }
+
+        function validateForm() {
+            let isValid = true;
+
+            const name = document.getElementById('name').value.trim();
+            if (name.length < 2) {
+                showFieldError('name', 'nameError', 'Name must be at least 2 characters');
+                isValid = false;
+            } else {
+                clearFieldError('name', 'nameError');
+            }
+
+            const email = document.getElementById('email').value.trim();
+            if (!Utils.validateEmail(email)) {
+                showFieldError('email', 'emailError', 'Please enter a valid email');
+                isValid = false;
+            } else {
+                clearFieldError('email', 'emailError');
+            }
+
+            const password = document.getElementById('password').value;
+            if (password.length < 6) {
+                showFieldError('password', 'passwordError', 'Password must be at least 6 characters');
+                isValid = false;
+            } else {
+                clearFieldError('password', 'passwordError');
+            }
+
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            if (password !== confirmPassword) {
+                showFieldError('confirmPassword', 'confirmPasswordError', 'Passwords don\'t match');
+                isValid = false;
+            } else {
+                clearFieldError('confirmPassword', 'confirmPasswordError');
+            }
+
+            return isValid;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            console.warn('AuthService', AuthService);
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            registerBtn.disabled = true;
+            registerBtn.classList.add('loading');
+
+            try {
+                const userData = {
+                    name: document.getElementById('name').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    password: document.getElementById('password').value,
+                    role: document.getElementById('role').value,
+                    phone: document.getElementById('phone').value.trim() || null,
+                    address: ''
+                };
+
+                const response = await AuthService.register(userData);
+                showAlert('Check mail for verification link', 'success');
+                showAlert('Account created successfully! Redirecting...', 'success');
+
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+
+            } catch (error) {
+                showAlert(error.message, 'error');
+                registerBtn.disabled = false;
+                registerBtn.classList.remove('loading');
+            }
+        });
+
+        // Real-time validation
+        document.getElementById('name').addEventListener('blur', function () {
+            if (this.value.trim().length > 0 && this.value.trim().length < 2) {
+                showFieldError('name', 'nameError', 'Name must be at least 2 characters');
+            } else {
+                clearFieldError('name', 'nameError');
+            }
+        });
+
+        document.getElementById('email').addEventListener('blur', function () {
+            if (!Utils.validateEmail(this.value.trim())) {
+                showFieldError('email', 'emailError', 'Please enter a valid email');
+            } else {
+                clearFieldError('email', 'emailError');
+            }
+        });
+
+        document.getElementById('password').addEventListener('blur', function () {
+            if (this.value.length < 6) {
+                showFieldError('password', 'passwordError', 'Password must be at least 6 characters');
+            } else {
+                clearFieldError('password', 'passwordError');
+            }
+        });
+
+        document.getElementById('confirmPassword').addEventListener('blur', function () {
+            const password = document.getElementById('password').value;
+            if (this.value !== password) {
+                showFieldError('confirmPassword', 'confirmPasswordError', 'Passwords don\'t match');
+            } else {
+                clearFieldError('confirmPassword', 'confirmPasswordError');
+            }
+        });
+    </script>
+</body>
+
+</html>

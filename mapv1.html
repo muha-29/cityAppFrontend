@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaint Map - Civic Complaint Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+            position: relative;
+            z-index: 1000;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .navbar-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-menu a:hover {
+            color: var(--primary);
+        }
+
+        .map-container {
+            display: flex;
+            height: calc(100vh - 70px);
+            position: relative;
+        }
+
+        #map {
+            flex: 1;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .map-btn {
+            padding: 12px 20px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .map-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .map-instruction {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            animation: slideDown 0.3s ease-out;
+            display: none;
+        }
+
+        .map-instruction.show {
+            display: block;
+        }
+
+        .map-instruction.pin-mode {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .sidebar {
+            width: 350px;
+            background: white;
+            overflow-y: auto;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            margin-bottom: 10px;
+        }
+
+        .filter-section {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .filter-section h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .filter-option:hover {
+            background: #f8f9fa;
+        }
+
+        .filter-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .complaints-list {
+            padding: 20px;
+        }
+
+        .complaint-item {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .complaint-item:hover {
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .complaint-item.active {
+            border-color: var(--primary);
+            background: #f0f4ff;
+        }
+
+        .complaint-item h4 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .complaint-item p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .complaint-item .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        /* Complaint Creation Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-header h2 {
+            color: #333;
+            margin: 0;
+        }
+
+        .modal-close {
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group label .required {
+            color: var(--danger);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .location-info {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .location-info h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .location-info p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .photo-upload-mini {
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .photo-upload-mini:hover {
+            border-color: var(--primary);
+            background: #f8f9fa;
+        }
+
+        .photo-upload-mini input[type="file"] {
+            display: none;
+        }
+
+        .photo-preview-mini {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .photo-preview-mini.show {
+            display: block;
+        }
+
+        .photo-preview-mini img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .legend {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+
+        .legend h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .legend-marker {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .legend-marker.pending {
+            background: #fff3cd;
+        }
+
+        .legend-marker.progress {
+            background: #d1ecf1;
+        }
+
+        .legend-marker.resolved {
+            background: #d4edda;
+        }
+
+        .legend-marker.new-pin {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        /* Custom Marker for Dropped Pin */
+        .dropped-pin-marker {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            border: 4px solid white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5);
+            animation: dropPin 0.5s ease-out, pulse 2s infinite;
+        }
+
+        @keyframes dropPin {
+            0% {
+                transform: translateY(-100px) rotate(-45deg) scale(0);
+                opacity: 0;
+            }
+
+            50% {
+                transform: translateY(10px) rotate(-45deg) scale(1.1);
+            }
+
+            100% {
+                transform: translateY(0) rotate(-45deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .dropped-pin-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            font-size: 1.5em;
+            color: white;
+        }
+
+        @media (max-width: 968px) {
+            .map-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+            }
+
+            #map {
+                height: 60vh;
+            }
+
+            .map-controls {
+                top: 10px;
+                left: 10px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="index.html" class="navbar-brand">🌍 Civic Tracker</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="create-complaint.html">Report Issue</a>
+                <a href="map.html">Map View</a>
+                <button class="btn btn-small btn-primary" onclick="handleAuthButton()">Login</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Map Instruction -->
+    <div class="map-instruction" id="mapInstruction">
+        Click anywhere on the map to report a civic issue at that location
+    </div>
+
+    <div class="map-container">
+        <!-- Map Controls -->
+        <div class="map-controls">
+            <button class="map-btn" id="dropPinBtn" onclick="toggleDropPinMode()">
+                <span>📍</span>
+                <span>Drop Pin</span>
+            </button>
+            <button class="map-btn" onclick="centerOnUser()">
+                <span>📍</span>
+                <span>My Location</span>
+            </button>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>All Complaints</h2>
+                <p style="opacity: 0.9;">View civic issues in your area</p>
+            </div>
+
+            <div class="filter-section">
+                <h3>Filter by Status</h3>
+                <div class="filter-options">
+                    <label class="filter-option">
+                        <input type="checkbox" checked data-status="Pending">
+                        <span class="badge badge-pending">Pending</span>
+                    </label>
+                    <label class="filter-option">
+                        <input type="checkbox" checked data-status="In Progress">
+                        <span class="badge badge-progress">In Progress</span>
+                    </label>
+                    <label class="filter-option">
+                        <input type="checkbox" checked data-status="Resolved">
+                        <span class="badge badge-resolved">Resolved</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="complaints-list" id="complaintsList">
+                <!-- Complaints will be loaded here -->
+            </div>
+
+            <div class="legend">
+                <h3>Map Legend</h3>
+                <div class="legend-item">
+                    <div class="legend-marker pending">⏳</div>
+                    <span>Pending</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker progress">🔄</div>
+                    <span>In Progress</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker resolved">✅</div>
+                    <span>Resolved</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-marker new-pin">📍</div>
+                    <span>New Pin</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaint Creation Modal -->
+    <div class="modal" id="complaintModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📍 Report Civic Issue</h2>
+                <button class="modal-close" onclick="closeComplaintModal()">&times;</button>
+            </div>
+
+            <div id="modalAlert"></div>
+
+            <div class="location-info">
+                <h4>📍 Selected Location</h4>
+                <p><strong>Latitude:</strong> <span id="modalLat">-</span></p>
+                <p><strong>Longitude:</strong> <span id="modalLng">-</span></p>
+                <p style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <strong>Address:</strong>
+                </p>
+                <p id="modalAddress"
+                    style="font-size: 0.95em; line-height: 1.5; color: rgba(255,255,255,0.9);margin-top: 8px;">
+                    <em>Click on the map to select a location</em>
+                </p>
+            </div>
+
+            <form id="quickComplaintForm">
+                <div class="form-group">
+                    <label for="modalTitle">Issue Title <span class="required">*</span></label>
+                    <input type="text" id="modalTitle" placeholder="e.g., Pothole on Main Street" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="modalCategory">Category <span class="required">*</span></label>
+                    <select id="modalCategory" required>
+                        <option value="">Select a category</option>
+                        <option value="Pothole">Pothole</option>
+                        <option value="Garbage">Garbage/Waste</option>
+                        <option value="Streetlight">Streetlight</option>
+                        <option value="Water Supply">Water Supply</option>
+                        <option value="Drainage">Drainage</option>
+                        <option value="Road Damage">Road Damage</option>
+                        <option value="Public Property">Public Property Damage</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="modalDescription">Description <span class="required">*</span></label>
+                    <textarea id="modalDescription" placeholder="Describe the issue in detail..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Photo Evidence (Optional)</label>
+                    <div class="photo-upload-mini" onclick="document.getElementById('modalPhotoInput').click()">
+                        <input type="file" id="modalPhotoInput" accept="image/*">
+                        <div style="font-size: 2em; margin-bottom: 10px;">📷</div>
+                        <p style="color: #666; margin: 0;">Click to upload photo</p>
+                    </div>
+                    <div class="photo-preview-mini" id="modalPhotoPreview">
+                        <img id="modalPreviewImage" src="" alt="Preview">
+                        <button type="button" class="btn btn-small btn-danger" style="margin-top: 10px;"
+                            onclick="removeModalPhoto()">Remove</button>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeComplaintModal()"
+                        style="background: #e0e0e0; color: #666;">Cancel</button>
+                    <button type="submit" class="btn-submit" id="modalSubmitBtn"
+                        style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white;">
+                        <span id="modalSubmitText">Submit Complaint</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        let map;
+        let markers = [];
+        let allComplaints = [];
+        let filteredComplaints = [];
+        let activeFilters = ['Pending', 'In Progress', 'Resolved'];
+        let realtimeChannel = null;
+        let dropPinMode = false;
+        let droppedPinMarker = null;
+        let selectedLocation = { lat: null, lng: null, address: null };
+        let selectedPhotoFile = null;
+        let userLocation = null;
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([28.6139, 77.2090], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Try to center on user's location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLocation = [position.coords.latitude, position.coords.longitude];
+                        map.setView(userLocation, 13);
+
+                        // Add user location marker
+                        L.marker(userLocation, {
+                            icon: L.divIcon({
+                                className: 'user-location-marker',
+                                html: '<div style="background: #4285f4; width: 15px; height: 15px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+                                iconSize: [20, 20]
+                            })
+                        }).addTo(map).bindPopup('📍 Your Location');
+                    },
+                    (error) => {
+                        console.log('Could not get user location:', error);
+                    }
+                );
+            }
+
+            // Map click event for dropping pin
+            map.on('click', function (e) {
+                if (dropPinMode) {
+                    handleMapClick(e);
+                }
+            });
+        }
+
+        // Handle map click for pin dropping
+        async function handleMapClick(e) {
+            const { lat, lng } = e.latlng;
+
+            // Remove previous dropped pin if exists
+            if (droppedPinMarker) {
+                map.removeLayer(droppedPinMarker);
+            }
+
+            // Create custom dropped pin marker
+            droppedPinMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: 'dropped-pin-marker',
+                    html: '<div class="dropped-pin-icon">📍</div>',
+                    iconSize: [50, 50],
+                    iconAnchor: [25, 50]
+                })
+            }).addTo(map);
+
+            // Store selected location
+            selectedLocation.lat = lat;
+            selectedLocation.lng = lng;
+
+            // Show loading in modal
+            document.getElementById('modalLat').textContent = lat.toFixed(6);
+            document.getElementById('modalLng').textContent = lng.toFixed(6);
+
+            // Get address using reverse geocoding
+            await getAddressFromCoordinates(lat, lng);
+
+            // Check if user is authenticated
+            const isAuth = await AuthService.isAuthenticated();
+
+            if (!isAuth) {
+                if (confirm('You need to login to report an issue. Do you want to login now?')) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+            } else {
+                // Open complaint modal
+                openComplaintModal();
+            }
+        }
+
+        // Reverse Geocoding - Get address from coordinates
+        async function getAddressFromCoordinates(lat, lng) {
+            try {
+                // Show loading
+                const addressElement = document.getElementById('modalAddress');
+                if (addressElement) {
+                    addressElement.innerHTML = '<em>Loading address...</em>';
+                }
+
+                // Use Nominatim API for reverse geocoding
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+                );
+
+                if (!response.ok) throw new Error('Geocoding failed');
+
+                const data = await response.json();
+
+                if (data && data.display_name) {
+                    selectedLocation.address = data.display_name;
+
+                    // Update modal with address
+                    if (addressElement) {
+                        addressElement.innerHTML = selectedLocation.address;
+                    }
+
+                    // Also update the pin popup
+                    if (droppedPinMarker) {
+                        droppedPinMarker.bindPopup(`
+                            <div style="max-width: 250px;">
+                                <h4 style="margin-bottom: 10px; color: var(--primary);">📍 Selected Location</h4>
+                                <p style="margin: 5px 0;"><strong>Coordinates:</strong></p>
+                                <p style="margin: 5px 0; font-size: 0.9em;">${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
+                                <p style="margin: 5px 0;"><strong>Address:</strong></p>
+                                <p style="margin: 5px 0; font-size: 0.9em;">${selectedLocation.address}</p>
+                                <button onclick="openComplaintModal()" style="margin-top: 10px; padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer;">
+                                    Report Issue Here
+                                </button>
+                            </div>
+                        `).openPopup();
+                    }
+                } else {
+                    selectedLocation.address = 'Address not available';
+                    if (addressElement) {
+                        addressElement.innerHTML = '<em>Address not available</em>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error getting address:', error);
+                selectedLocation.address = 'Unable to fetch address';
+                const addressElement = document.getElementById('modalAddress');
+                if (addressElement) {
+                    addressElement.innerHTML = '<em style="color: #999;">Address unavailable</em>';
+                }
+            }
+        }
+
+        // Toggle drop pin mode
+        function toggleDropPinMode() {
+            dropPinMode = !dropPinMode;
+            const dropPinBtn = document.getElementById('dropPinBtn');
+            const instruction = document.getElementById('mapInstruction');
+
+            if (dropPinMode) {
+                dropPinBtn.classList.add('active');
+                instruction.classList.add('show', 'pin-mode');
+                map.getContainer().style.cursor = 'crosshair';
+            } else {
+                dropPinBtn.classList.remove('active');
+                instruction.classList.remove('show', 'pin-mode');
+                map.getContainer().style.cursor = '';
+
+                // Remove dropped pin if exists
+                if (droppedPinMarker) {
+                    map.removeLayer(droppedPinMarker);
+                    droppedPinMarker = null;
+                }
+            }
+        }
+
+        // Center map on user location
+        function centerOnUser() {
+            if (userLocation) {
+                map.setView(userLocation, 15);
+            } else {
+                alert('Unable to get your location. Please enable location services.');
+            }
+        }
+
+        // Open complaint modal
+        function openComplaintModal() {
+            const modal = document.getElementById('complaintModal');
+            modal.classList.add('show');
+
+            // Update location info in modal
+            document.getElementById('modalLat').textContent = selectedLocation.lat ? selectedLocation.lat.toFixed(6) : '-';
+            document.getElementById('modalLng').textContent = selectedLocation.lng ? selectedLocation.lng.toFixed(6) : '-';
+
+            // Add address field to location info if not exists
+            const locationInfo = document.querySelector('.location-info');
+            if (!document.getElementById('modalAddress')) {
+                const addressP = document.createElement('p');
+                addressP.innerHTML = '<strong>Address:</strong> <span id="modalAddress">Loading...</span>';
+                locationInfo.appendChild(addressP);
+            }
+
+            document.getElementById('modalAddress').innerHTML = selectedLocation.address || '<em>Loading...</em>';
+        }
+
+        // Close complaint modal
+        function closeComplaintModal() {
+            const modal = document.getElementById('complaintModal');
+            modal.classList.remove('show');
+
+            // Reset form
+            document.getElementById('quickComplaintForm').reset();
+            removeModalPhoto();
+
+            // Clear selected location
+            selectedLocation = { lat: null, lng: null, address: null };
+
+            // Remove dropped pin
+            if (droppedPinMarker) {
+                map.removeLayer(droppedPinMarker);
+                droppedPinMarker = null;
+            }
+
+            // Turn off drop pin mode
+            if (dropPinMode) {
+                toggleDropPinMode();
+            }
+        }
+
+        // Handle authentication button
+        async function handleAuthButton() {
+            const isAuth = await AuthService.isAuthenticated();
+            if (isAuth) {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Update auth button text
+        async function updateAuthButton() {
+            const isAuth = await AuthService.isAuthenticated();
+            const btnContainer = document.querySelector('.navbar-menu');
+            const authBtn = btnContainer.querySelector('.btn');
+
+            if (isAuth) {
+                authBtn.textContent = 'Dashboard';
+            }
+        }
+
+        // Photo upload in modal
+        document.getElementById('modalPhotoInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+
+            if (file) {
+                // Validate file
+                if (file.size > 5 * 1024 * 1024) {
+                    showModalAlert('File size must be less than 5MB', 'error');
+                    this.value = '';
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    showModalAlert('Please select a valid image file', 'error');
+                    this.value = '';
+                    return;
+                }
+
+                selectedPhotoFile = file;
+
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('modalPreviewImage').src = e.target.result;
+                    document.getElementById('modalPhotoPreview').classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Remove photo from modal
+        function removeModalPhoto() {
+            selectedPhotoFile = null;
+            document.getElementById('modalPhotoInput').value = '';
+            document.getElementById('modalPhotoPreview').classList.remove('show');
+            document.getElementById('modalPreviewImage').src = '';
+        }
+
+        // Show alert in modal
+        function showModalAlert(message, type = 'error') {
+            const alertContainer = document.getElementById('modalAlert');
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type}" style="margin-bottom: 20px;">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        // Submit complaint from modal
+        document.getElementById('quickComplaintForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const title = document.getElementById('modalTitle').value.trim();
+            const category = document.getElementById('modalCategory').value;
+            const description = document.getElementById('modalDescription').value.trim();
+
+            // Validation
+            if (title.length < 3) {
+                showModalAlert('Title must be at least 3 characters', 'error');
+                return;
+            }
+
+            if (description.length < 10) {
+                showModalAlert('Description must be at least 10 characters', 'error');
+                return;
+            }
+
+            if (!category) {
+                showModalAlert('Please select a category', 'error');
+                return;
+            }
+
+            if (!selectedLocation.lat || !selectedLocation.lng) {
+                showModalAlert('Location not selected. Please drop a pin on the map.', 'error');
+                return;
+            }
+
+            // Show loading
+            const submitBtn = document.getElementById('modalSubmitBtn');
+            submitBtn.disabled = true;
+            document.getElementById('modalSubmitText').textContent = 'Submitting...';
+
+            try {
+                let photoUrl = null;
+
+                // Upload photo if selected
+                if (selectedPhotoFile) {
+                    showModalAlert('Uploading photo...', 'info');
+                    const uploadResult = await ComplaintService.uploadPhoto(selectedPhotoFile);
+                    photoUrl = uploadResult.url;
+                }
+
+                // Create complaint
+                const complaintData = {
+                    title: title,
+                    description: description,
+                    category: category,
+                    lat: selectedLocation.lat,
+                    lng: selectedLocation.lng,
+                    photoUrl: photoUrl
+                };
+
+                const response = await ComplaintService.createComplaint(complaintData);
+
+                if (response.success) {
+                    showModalAlert('Complaint submitted successfully!', 'success');
+
+                    // Close modal after 1.5 seconds
+                    setTimeout(() => {
+                        closeComplaintModal();
+                        loadComplaints(); // Reload complaints
+                    }, 1500);
+                }
+
+            } catch (error) {
+                console.error('Error submitting complaint:', error);
+                showModalAlert(error.message || 'Failed to submit complaint', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                document.getElementById('modalSubmitText').textContent = 'Submit Complaint';
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('complaintModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeComplaintModal();
+            }
+        });
+
+        // Get marker icon based on status
+        function getMarkerIcon(status) {
+            const icons = {
+                'Pending': '⏳',
+                'In Progress': '🔄',
+                'Resolved': '✅'
+            };
+
+            const colors = {
+                'Pending': '#fff3cd',
+                'In Progress': '#d1ecf1',
+                'Resolved': '#d4edda'
+            };
+
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background: ${colors[status]};
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.5em;
+                    border: 3px solid white;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+                    cursor: pointer;
+                ">${icons[status]}</div>`,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20],
+                popupAnchor: [0, -20]
+            });
+        }
+
+        // Add markers to map
+        function addMarkersToMap() {
+            // Clear existing markers (except dropped pin and user location)
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+
+            // Add new markers
+            filteredComplaints.forEach(complaint => {
+                if (!complaint.latitude || !complaint.longitude) return;
+
+                const lat = complaint.latitude;
+                const lng = complaint.longitude;
+                const marker = L.marker([lat, lng], {
+                    icon: getMarkerIcon(complaint.status)
+                }).addTo(map);
+
+                const popupContent = `
+                    <div style="min-width: 200px;">
+                        <h3 style="margin-bottom: 10px; color: #333;">${complaint.title}</h3>
+                        <p style="margin-bottom: 10px;"><strong>Category:</strong> ${complaint.category || 'General'}</p>
+                        <p style="margin-bottom: 10px;">${Utils.truncate(complaint.description, 100)}</p>
+                        <p style="margin-bottom: 10px;">${Utils.getStatusBadge(complaint.status)}</p>
+                        ${complaint.photo_url ? `<img src="${complaint.photo_url}" style="width: 100%; border-radius: 8px; margin-bottom: 10px;">` : ''}
+                        <small style="color: #999;">${Utils.formatDate(complaint.created_at)}</small>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+
+                marker.on('click', () => {
+                    highlightComplaint(complaint.id);
+                });
+
+                markers.push(marker);
+            });
+
+            if (markers.length > 0 && !dropPinMode) {
+                const group = L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        // Highlight complaint in sidebar
+        function highlightComplaint(complaintId) {
+            document.querySelectorAll('.complaint-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            const element = document.querySelector(`[data-complaint-id="${complaintId}"]`);
+            if (element) {
+                element.classList.add('active');
+                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // Display complaints in sidebar
+        function displayComplaints() {
+            const complaintsList = document.getElementById('complaintsList');
+
+            if (filteredComplaints.length === 0) {
+                complaintsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">📭</div>
+                        <p>No complaints to display</p>
+                    </div>
+                `;
+                return;
+            }
+
+            complaintsList.innerHTML = filteredComplaints.map(complaint => `
+                <div class="complaint-item" data-complaint-id="${complaint.id}" onclick="focusOnMarker('${complaint.id}')">
+                    <h4>${complaint.title}</h4>
+                    <span class="badge badge-${complaint.status.toLowerCase().replace(' ', '-')}" style="margin-bottom: 10px; display: inline-block;">
+                        ${complaint.status}
+                    </span>
+                    <p>${Utils.truncate(complaint.description, 80)}</p>
+                    <div class="meta">
+                        <span>${complaint.category || 'General'}</span>
+                        <span>${Utils.formatDate(complaint.created_at)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Focus on marker when clicking complaint in sidebar
+        function focusOnMarker(complaintId) {
+            const complaint = allComplaints.find(c => c.id === complaintId);
+            if (complaint && complaint.latitude && complaint.longitude) {
+                const lat = complaint.latitude;
+                const lng = complaint.longitude;
+                map.setView([lat, lng], 16);
+
+                markers.forEach(marker => {
+                    const markerLatLng = marker.getLatLng();
+                    if (Math.abs(markerLatLng.lat - lat) < 0.0001 && Math.abs(markerLatLng.lng - lng) < 0.0001) {
+                        marker.openPopup();
+                    }
+                });
+            }
+            highlightComplaint(complaintId);
+        }
+
+        // Filter complaints
+        function filterComplaints() {
+            filteredComplaints = allComplaints.filter(complaint =>
+                activeFilters.includes(complaint.status)
+            );
+            displayComplaints();
+            addMarkersToMap();
+        }
+
+        // Load complaints from Supabase
+        async function loadComplaints() {
+            try {
+                const response = await ComplaintService.getAllComplaints();
+
+                if (response.success) {
+                    allComplaints = response.complaints || [];
+                    filterComplaints();
+                }
+            } catch (error) {
+                console.error('Error loading complaints:', error);
+                document.getElementById('complaintsList').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #dc3545;">
+                        <p>Failed to load complaints</p>
+                        <button class="btn btn-primary btn-small" onclick="loadComplaints()">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Subscribe to real-time updates
+        function subscribeToUpdates() {
+            realtimeChannel = ComplaintService.subscribeToComplaints((payload) => {
+                console.log('Real-time update:', payload);
+                loadComplaints();
+            });
+        }
+
+        // Filter checkbox event listeners
+        document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const status = this.dataset.status;
+
+                if (this.checked) {
+                    if (!activeFilters.includes(status)) {
+                        activeFilters.push(status);
+                    }
+                } else {
+                    activeFilters = activeFilters.filter(f => f !== status);
+                }
+
+                filterComplaints();
+            });
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (realtimeChannel) {
+                supabase.removeChannel(realtimeChannel);
+            }
+        });
+
+        // Initialize everything when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            initMap();
+            loadComplaints();
+            subscribeToUpdates();
+            updateAuthButton();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Civic Complaint Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .navbar-menu {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .navbar-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-menu a:hover {
+            color: var(--primary);
+        }
+
+        .profile-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3em;
+            font-weight: bold;
+            margin: 0 auto 20px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .profile-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .profile-header .role-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-item .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .profile-details {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .profile-details h2 {
+            color: #333;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .detail-item {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-item .label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .detail-item .value {
+            color: #333;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="index.html" class="navbar-brand">🌍 Civic Tracker</a>
+            <div class="navbar-menu">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="create-complaint.html">Report Issue</a>
+                <a href="map.html">Map View</a>
+                <a href="profile.html">Profile</a>
+                <button class="btn btn-small btn-danger" onclick="AuthService.logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="profile-container fade-in">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profileAvatar">U</div>
+                <h1 id="profileName">User Name</h1>
+                <span class="role-badge" id="profileRole">Citizen</span>
+                <p style="color: #666; margin-top: 10px;" id="profileEmail">user@example.com</p>
+
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="number" id="userTotalComplaints">0</div>
+                        <div class="label">Total Complaints</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="number" id="userPendingComplaints">0</div>
+                        <div class="label">Pending</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="number" id="userResolvedComplaints">0</div>
+                        <div class="label">Resolved</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-details">
+                <h2>Account Information</h2>
+                
+                <div class="detail-item">
+                    <div class="label">Full Name</div>
+                    <div class="value" id="detailName">-</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="label">Email Address</div>
+                    <div class="value" id="detailEmail">-</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="label">Phone Number</div>
+                    <div class="value" id="detailPhone">-</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="label">Address</div>
+                    <div class="value" id="detailAddress">-</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="label">Account Type</div>
+                    <div class="value" id="detailRole">-</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="label">Member Since</div>
+                    <div class="value" id="detailCreated">-</div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="alert('Edit profile feature coming soon!')">
+                        Edit Profile
+                    </button>
+                    <button class="btn btn-danger" onclick="AuthService.logout()">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        async function loadProfile() {
+            await protectRoute();
+
+            const user = await AuthService.getCurrentUser();
+            
+            if (user) {
+                // Update profile header
+                document.getElementById('profileAvatar').textContent = user.name.charAt(0).toUpperCase();
+                document.getElementById('profileName').textContent = user.name;
+                document.getElementById('profileEmail').textContent = user.email;
+                document.getElementById('profileRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+
+                // Update details
+                document.getElementById('detailName').textContent = user.name;
+                document.getElementById('detailEmail').textContent = user.email;
+                document.getElementById('detailPhone').textContent = user.phone || 'Not provided';
+                document.getElementById('detailAddress').textContent = user.address || 'Not provided';
+                document.getElementById('detailRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+                document.getElementById('detailCreated').textContent = user.created_at ? Utils.formatDate(user.created_at) : 'N/A';
+
+                // Load user's complaint statistics
+                try {
+                    const response = await ComplaintService.getMyComplaints();
+                    if (response.success) {
+                        const complaints = response.complaints || [];
+                        const pending = complaints.filter(c => c.status === 'Pending').length;
+                        const resolved = complaints.filter(c => c.status === 'Resolved').length;
+
+                        document.getElementById('userTotalComplaints').textContent = complaints.length;
+                        document.getElementById('userPendingComplaints').textContent = pending;
+                        document.getElementById('userResolvedComplaints').textContent = resolved;
+                    }
+                } catch (error) {
+                    console.error('Error loading user complaints:', error);
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>

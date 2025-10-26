@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Civic Complaint Tracker - Building Better Communities</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://nominatim.openstreetmap.org">
+    <link rel="dns-prefetch" href="https://api.supabase.co">
+    <link rel="preload" as="script" href="js/supabase-config.js">
+    <link rel="preload" as="style" href="./css/styles.css">
+
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --secondary: #f093fb;
+            --success: #00C851;
+            --danger: #ff4444;
+            --warning: #ffbb33;
+            --info: #33b5e5;
+            --dark: #212121;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* min-height: 100vh; */
+            /* display: flex; */
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--danger), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            border-radius: 6px;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dd3333;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #00A040;
+        }
+
+        .btn-info {
+            background: var(--info);
+            color: white;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-content p {
+            font-size: 1.3em;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-buttons .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+        }
+
+        .features-section {
+            background: white;
+            padding: 80px 20px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .stats-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            max-width: 1000px;
+            margin: 40px auto 0;
+        }
+
+        .stat-item h2 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .stat-item p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            color: white;
+            text-align: center;
+            padding-top: 20vh;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>🌍 Civic Complaint Tracker</h1>
+            <p>Empowering citizens to report civic issues and build better communities together</p>
+            <div class="hero-buttons">
+                <a href="dashboard.html" class="btn btn-primary">Dashboard</a>
+                <a href="create-complaint.html" class="btn btn-success">Report Issue</a>
+                <a href="map.html" class="btn btn-primary">Map View</a>
+                <a href="map.html" class="btn btn-info">🗺️ Smart Navigation</a>
+                <button class="btn btn-small btn-success" id="authBtn" onclick="handleAuthButton()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="features-section">
+        <div class="container">
+            <h2 style="text-align: center; font-size: 2.5em; margin-bottom: 50px; color: #333;">Why Use Our Platform?
+            </h2>
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">📍</div>
+                    <h3>Location-Based Reporting</h3>
+                    <p>Report issues with precise geolocation for faster resolution</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">📊</div>
+                    <h3>Real-Time Tracking</h3>
+                    <p>Track your complaint status from submission to resolution</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>Interactive Map</h3>
+                    <p>View all complaints on an interactive community map</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">📸</div>
+                    <h3>Photo Evidence</h3>
+                    <p>Add photos to provide clear evidence of issues</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Fast Response</h3>
+                    <p>Get quick responses from local authorities</p>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure & Private</h3>
+                    <p>Your data is protected with industry-standard security</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-section">
+        <h2 style="font-size: 2.5em; margin-bottom: 20px;">Making a Difference</h2>
+        <p style="font-size: 1.2em; opacity: 0.9; margin-bottom: 20px;">Join thousands of active citizens</p>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <h2 id="totalComplaints">0</h2>
+                <p>Total Complaints</p>
+            </div>
+            <div class="stat-item">
+                <h2 id="resolvedComplaints">0</h2>
+                <p>Resolved Issues</p>
+            </div>
+            <div class="stat-item">
+                <h2 id="activeCitizens">0</h2>
+                <p>Active Citizens</p>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        camera.position.z = 5;
+
+        // Create satellite
+        const geometry = new THREE.IcosahedronGeometry(1, 4);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x00ff88,
+            wireframe: false,
+            emissive: 0x004444
+        });
+        const satellite = new THREE.Mesh(geometry, material);
+        scene.add(satellite);
+
+        // Add lighting
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(5, 5, 5);
+        scene.add(light);
+
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        // Create orbital path
+        const orbitGroup = new THREE.Group();
+        orbitGroup.add(satellite);
+        scene.add(orbitGroup);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate satellite
+            satellite.rotation.x += 0.005;
+            satellite.rotation.y += 0.01;
+
+            // Orbit movement
+            orbitGroup.rotation.z += 0.001;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load('./img/earth.png', (texture) => {
+            const material = new THREE.MeshPhongMaterial({
+                map: texture,
+                emissive: 0x111111
+            });
+            satellite.material = material;
+        });
+
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/journey-service.js"></script>
+    <script src="js/performance.js"></script>
+    <script src="js/monitoring.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Initialize monitoring
+        PerformanceMonitor.logMemory();
+
+        // Log metrics periodically
+        setInterval(() => {
+            PerformanceMonitor.logMemory();
+        }, 30000); // Every 30 seconds
+    </script>
+
+    <script>
+        // Animated counters
+        function animateCounter(id, target) {
+            let current = 0;
+            const increment = target / 100;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                document.getElementById(id).textContent = Math.floor(current);
+            }, 20);
+        }
+
+        // Load real stats from Supabase
+        async function loadStats() {
+            try {
+                // Get total complaints count
+                const { count: totalCount } = await supabase
+                    .from('complaints')
+                    .select('*', { count: 'exact', head: true });
+
+                // Get resolved complaints count
+                const { count: resolvedCount } = await supabase
+                    .from('complaints')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'Resolved');
+
+                // Get total users count
+                const { count: usersCount } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true });
+
+                // Animate counters
+                animateCounter('totalComplaints', totalCount || 0);
+                animateCounter('resolvedComplaints', resolvedCount || 0);
+                animateCounter('activeCitizens', usersCount || 0);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Fallback to simulated stats
+                animateCounter('totalComplaints', 1247);
+                animateCounter('resolvedComplaints', 892);
+                animateCounter('activeCitizens', 543);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadStats);
+        // Handle auth button based on login status
+        async function handleAuthButton() {
+            const isAuth = await AuthService.isAuthenticated();
+            if (isAuth) {
+                const dashboardUrl = await AuthService.getDashboardUrl();
+                window.location.href = dashboardUrl;
+            } else {
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Update button text based on auth status
+        async function updateAuthButton() {
+            const isAuth = await AuthService.isAuthenticated();
+            const authBtn = document.getElementById('authBtn');
+
+            if (isAuth) {
+                const role = await AuthService.getCurrentUserRole();
+                if (role === 'admin') {
+                    authBtn.textContent = '👑 Admin Dashboard';
+                } else {
+                    authBtn.textContent = 'Dashboard';
+                }
+            } else {
+                authBtn.textContent = 'Login';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', updateAuthButton);
+    </script>
+</body>
+
+</html>
