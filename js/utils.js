@@ -162,8 +162,7 @@ const ComplaintService = {
             // Get public URL
             const { data: { publicUrl } } = supabase.storage
                 .from('complaint-photos')
-                .getPublicUrl(fileName + '??token=' + token)
-                .token('?=');
+                .getPublicUrl(fileName);
 
             return { success: true, url: publicUrl };
         } catch (error) {
